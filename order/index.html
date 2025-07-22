@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html data-theme="winter" lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Lebanese Order</title>
+        <link rel="stylesheet" href="/static/build.css">
+        <link rel="icon" href="/static/lebanon.png">
+    </head>
+    <body class="min-h-screen">
+        <div class="sm:flex sm:flex-row">
+            <div class="sm:basis-60 flex justify-center">
+                <div class="text-6xl sm:text-8xl tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-secondary to-primary font-extrabold p-4 sm:p-6">Lebanese Menu</div>
+                <div class="sm:fixed sm:bottom-0 sm:left-0 m-12 flex justify-center">
+                    <div class="rounded-lg p-12 w-80 bg-white p-4 shadow-xl flex flex-col" id="basket">
+                        <h2 class="text-xl font-bold">Selected Dishes</h2>
+                        <div class="flex justify-center">
+                            <ul class="list-disc p-2 grow"></ul>
+                        </div>
+                        <div class="py-4">
+                            <label class="input input-bordered flex items-center gap-2">
+                                <input type="text" class="grow" id="owner" placeholder="Username" />
+                            </label>
+                        </div>
+                        <button class="btn bg-gradient-to-r from-secondary to-primary text-white text-xl hover:shadow transition ease-in-out" id="order-button">Add to command</button>
+                    </div>
+                </div>
+            </div>
+            <div id="menu" class="sm:grow max-w-screen-sm mx-auto p-2 p-12">
+            </div>
+        </div>
+
+    </body>
+    <script>
+
+        const cookies = document.cookie;
+        const order = document.getElementById("order-button");
+        fetch('/static/menu.json')
+            .then(response => response.json())
+            .then(data => data.map(category => {
+                const menu = document.getElementById("menu");
+                const div = document.createElement("div");
+                div.classList.add("collapse", "collapse-arrow", "bg-base-100", "border", "border-base-300", "m-8", "shadow-md");
+                const input = document.createElement("input");
+                input.setAttribute("name", "my-accordion-2");
+                input.setAttribute("type", "radio");
+                const h2 = document.createElement("div");
+                h2.classList.add("collapse-title", "font-semibold");
+                const categoryContent = document.createElement("div");
+                categoryContent.classList.add("collapse-content", "text-sm");
+                const table = document.createElement("table");
+                table.classList.add("table", "table-xs")
+                category.items.map(
+                    item => {
+                        const id = item["name"].toLowerCase().replaceAll(" ", "_");
+                        const row = table.insertRow(0);
+                        row.id = id;
+                        row.classList.add("hover:bg-secondary-content", "hover:cursor-pointer", "transition", "ease-in-out");
+                        row.setAttribute("name", item["name"]);
+                        const cell0 = row.insertCell(0);
+                        const cell1 = row.insertCell(1);
+                        const cell2 = row.insertCell(2);
+                        cell0.innerHTML = item["name"];
+                        cell1.innerHTML = item["description"];
+                        cell2.innerHTML = item["price"];
+                    }
+                )
+
+                h2.innerHTML = category["category"];
+                div.appendChild(h2);
+                div.appendChild(input);
+
+                categoryContent.appendChild(table);
+                div.appendChild(categoryContent);
+
+                menu.appendChild(div);
+            }))
+            .then(() => {
+                const items = menu.querySelectorAll('tr');
+                items.forEach(item => {
+                    item.addEventListener('click', () => {
+                        item.classList.toggle('selected');
+                        if (document.getElementById(`quantity-${item.id}`)) {
+                            const quantity = document.getElementById(`quantity-${item.id}`);
+                            quantity.textContent = parseInt(quantity.textContent) + 1;
+                        } else {
+                            item_ = document.createElement('li');
+                            item_.id = `li-selected-${item.id}`;
+                            item_.classList.add('flex', 'flex-row', 'p-2', 'justify-between');
+
+                            const item_quantity = document.createElement('span');
+                            item_quantity.id = `quantity-${item.id}`;
+                            item_quantity.textContent = 1;
+                            item_quantity.classList.add('quantity', 'text-lg', 'font-bold', 'pr-2');
+                            item_.appendChild(item_quantity)
+
+                            const item_name = document.createElement('span');
+                            item_name.textContent = item.getAttribute("name");
+                            item_.appendChild(item_name);
+
+                            const plus_minus = document.createElement('span');
+                            plus_minus.classList.add('flex', 'flex-row', 'gap-2');
+                            const plus = document.createElement('span');
+                            plus.id = `plus-${item.id}`;
+                            plus.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                                </svg>
+                                `;
+                            plus.classList.add('cursor-pointer', 'hover:text-primary', 'transition', 'ease-in-out');
+                            plus.addEventListener('click', () => item_quantity.textContent = parseInt(item_quantity.textContent) + 1);
+
+                            const minus = document.createElement('span');
+                            minus.id = `minus-${item.id}`;
+                            minus.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                                </svg>
+                                `;
+                            minus.classList.add('cursor-pointer', 'hover:text-secondary', 'transition', 'ease-in-out');
+                            minus.addEventListener('click', () => {
+                                if (parseInt(item_quantity.textContent) > 1) {
+                                    item_quantity.textContent = parseInt(item_quantity.textContent) - 1;
+                                } else {
+                                    const to_remove = document.getElementById(item_quantity.id.replace('quantity-', 'li-selected-'));
+                                    to_remove.remove();
+                                }
+                            });
+
+                            plus_minus.appendChild(plus);
+                            plus_minus.appendChild(minus);
+                            item_.appendChild(plus_minus);
+                            basket.querySelector('ul').appendChild(item_);
+                        }
+                    });
+                });
+                if (cookies.includes('lebanese-username')) {
+                    document.getElementById('owner').value = cookies.split('lebanese-username=')[1].split(';')[0];
+                }
+
+                isOrderLoading = false;
+                function resetOrderButton(){
+                    isOrderLoading = false;
+                    order.disabled = false;
+                    order.textContent = 'Add to command';
+                }
+
+                order.addEventListener('click', () => {
+                    if (isOrderLoading) return; // Prevent double-clicking
+                    isOrderLoading = true;
+                    order.disabled = true;
+                    order.textContent = 'Processing...';
+
+                    owner = document.getElementById('owner').value;
+                    document.cookie = `lebanese-username=${owner}`;
+                    var payload = `owner=${owner}`;
+
+                    const toto = Array.from(basket.querySelectorAll('.quantity'))
+                    const command = toto.map(item => `${item.id.replace('quantity-', '').replaceAll("_", "-")}_${item.textContent}`);
+                    if (command.length > 0) {
+                        payload += "&items=" + command.join(',')
+                        addOrder(payload).then(resetOrderButton);
+                    } else {
+                        alert('You need to select at least one dish');
+                        resetOrderButton();
+                    }
+                });
+            })
+            .catch(error => console.log(error));
+        
+        async function addOrder(payload) {
+            const url = "https://script.google.com/macros/s/AKfycbz-l2wk9ymbqIjQDzf3JBvuCBtRbRBge03gAvF-DI9vgtqjNy2DpPk8x_fcHsPw8r4e5w/exec"
+            const apiUrl = `${url}?${payload}`;
+            try {
+                const response = await fetch(apiUrl, { method: 'POST' });
+                const result = await response.json();
+                if (result.status === 'success') {
+                    document.location.href = "/full_order"
+                } else {
+                    alert('Failed to add order: ' + result.message);
+                }
+            } catch (error) {
+                console.error('Error adding order:', error);
+                alert('An error occurred while adding the order.');
+            }
+        }
+    </script>
+</html>
