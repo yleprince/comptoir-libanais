@@ -1137,9 +1137,6 @@
     --tw-tracking: var(--tracking-tighter);
     letter-spacing: var(--tracking-tighter);
   }
-  .text-primary {
-    color: var(--color-primary);
-  }
   .text-secondary {
     color: var(--color-secondary);
   }
